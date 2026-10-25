@@ -1,0 +1,19 @@
+{
+  "policy": {
+    "_meta": {
+      "description": "Log Observer: delete generated log indices 30 days after creation (spec sections 6.3 and 9.2)"
+    },
+    "phases": {
+      "hot": {
+        "min_age": "0ms",
+        "actions": {}
+      },
+      "delete": {
+        "min_age": "30d",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}

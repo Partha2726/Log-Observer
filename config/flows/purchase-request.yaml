@@ -1,0 +1,41 @@
+# config/flows/purchase-request.yaml  (the demo flow, spec section 2.6)
+id: purchase-request
+version: 1
+refPattern: '^REQ-\d{8}-\d{6}$'          # how to recognise this flow's flowRef
+roles: [requester, approver, executor]
+stages:
+  - name: SignIn
+    actorRole: null                       # each actor's own sign-in, matched by session
+    match:
+      - { service: gateway, httpMethod: POST, urlPath: '^/auth/login$' }
+      - { service: auth-service, eventAction: [LOGIN_OK, LOGIN_FAILED, MFA_OK, MFA_FAILED] }
+    successEvents: [LOGIN_OK]
+  - name: Create
+    actorRole: requester
+    match:
+      - { service: gateway, httpMethod: POST, urlPath: '^/api/requests$' }
+      - { service: workflow-service, eventAction: [request.form_opened, request.validation_failed, request.created] }
+    successEvents: [request.created]
+  - name: Approve
+    actorRole: approver
+    canReject: true
+    match:
+      - { service: gateway, httpMethod: POST, urlPath: '^/api/requests/[^/]+/(approve|reject)$' }
+      - { service: auth-service, eventAction: [AUTHZ_OK, AUTHZ_DENIED] }
+      - { service: workflow-service, eventAction: [request.approval_started, request.approved, request.rejected] }
+    successEvents: [request.approved]
+    rejectEvents: [request.rejected]
+  - name: Execute
+    actorRole: executor
+    match:
+      - { service: gateway, httpMethod: POST, urlPath: '^/api/requests/[^/]+/execute$' }
+      - { service: workflow-service, eventAction: [execution.started, execution.completed, execution.failed] }
+    successEvents: [execution.completed]
+signOut:
+  match:
+    - { service: gateway, httpMethod: POST, urlPath: '^/auth/logout$' }
+    - { service: auth-service, eventAction: [LOGOUT, SESSION_EXPIRED] }
+businessFields:                             # extracted into flow.* by Logstash (section 6.4)
+  amount: amount
+  currency: currency
+  counterparty: vendor_account               # hashed and masked, never stored in clear

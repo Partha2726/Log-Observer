@@ -1,0 +1,25 @@
+{
+  "items" : [ {
+    "id" : 1,
+    "ruleId" : "R05",
+    "ruleName" : "Stage failed",
+    "severity" : "HIGH",
+    "status" : "NEW",
+    "flowRef" : "REQ-20260515-000020",
+    "userId" : "usr-9970",
+    "clientIp" : null,
+    "detectedAt" : "2026-05-16T00:00:00.000Z",
+    "windowStart" : "2026-05-15T10:39:18.675Z",
+    "windowEnd" : "2026-05-15T10:39:48.828Z",
+    "details" : {
+      "stage" : "Approve"
+    },
+    "evidenceCount" : 1,
+    "version" : 0
+  } ],
+  "page" : 0,
+  "size" : 25,
+  "totalElements" : 1,
+  "totalPages" : 1,
+  "totalIsLowerBound" : false
+}

@@ -1,0 +1,255 @@
+# Log Observer stack (spec section 14.1). Start with `make up` from the repository root.
+# Every Elastic image uses the one pinned ELASTIC_VERSION. Memory caps and heaps default to the
+# spec's values and can be lowered in deploy/.env for smaller Docker VMs (see docs/DECISIONS.md).
+name: log-observer
+
+
+services:
+  # One-shot: least-privilege Elasticsearch users and roles (section 6.6).
+  setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-9.5.2}
+    container_name: log-observer-setup
+    restart: "no"
+    user: "0"
+    entrypoint: ["bash", "/setup/setup.sh"]
+    environment:
+      ES_URL: http://elasticsearch:9200
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?set ELASTIC_PASSWORD in deploy/.env}
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:?set KIBANA_SYSTEM_PASSWORD in deploy/.env}
+      LOGSTASH_WRITER_PASSWORD: ${LOGSTASH_WRITER_PASSWORD:?set LOGSTASH_WRITER_PASSWORD in deploy/.env}
+      ES_PASSWORD: ${ES_PASSWORD:?set ES_PASSWORD in deploy/.env}
+      ES_INDEX_PATTERN: ${ES_INDEX_PATTERN:-logs-flow-*}
+    volumes:
+      - ./setup:/setup:ro
+      - ./elasticsearch:/es:ro
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    mem_limit: 128m
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-9.5.2}
+    container_name: log-observer-elasticsearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "true"
+      # TLS on the HTTP layer is off for local development (recorded limitation, section 6.6).
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+      xpack.ml.enabled: "false"
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:?set ELASTIC_PASSWORD in deploy/.env}
+      ES_JAVA_OPTS: -Xms${ES_HEAP:-1g} -Xmx${ES_HEAP:-1g}
+    ports:
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs -u \"elastic:$${ELASTIC_PASSWORD}\" \"http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s\" >/dev/null"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+    mem_limit: ${ES_MEM_LIMIT:-2g}
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION:-9.5.2}
+    container_name: log-observer-kibana
+    profiles: ["tools"]
+    restart: unless-stopped
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_USERNAME: kibana_system
+      ELASTICSEARCH_PASSWORD: ${KIBANA_SYSTEM_PASSWORD:?set KIBANA_SYSTEM_PASSWORD in deploy/.env}
+    ports:
+      - "127.0.0.1:5601:5601"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:5601/api/status >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    mem_limit: 1g
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${ELASTIC_VERSION:-9.5.2}
+    container_name: log-observer-logstash
+    restart: unless-stopped
+    environment:
+      LS_JAVA_OPTS: -Xms${LS_HEAP:-512m} -Xmx${LS_HEAP:-512m}
+      XPACK_MONITORING_ENABLED: "false"
+      ES_URL: http://elasticsearch:9200
+      LOGSTASH_WRITER_PASSWORD: ${LOGSTASH_WRITER_PASSWORD:?set LOGSTASH_WRITER_PASSWORD in deploy/.env}
+      COUNTERPARTY_HASH_KEY: ${COUNTERPARTY_HASH_KEY:?set COUNTERPARTY_HASH_KEY in deploy/.env}
+      LOG_TIMEZONE: ${LOG_TIMEZONE:-UTC}
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./logstash/patterns:/usr/share/logstash/patterns:ro
+      # flowRef patterns and business field names come from the flow definitions.
+      - ../config/flows:/usr/share/logstash/flows:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9600/_node/stats >/dev/null"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    mem_limit: ${LS_MEM_LIMIT:-1g}
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:${ELASTIC_VERSION:-9.5.2}
+    container_name: log-observer-filebeat
+    restart: unless-stopped
+    user: root
+    # The config is bind-mounted from the host, so its owner is not root; relax the ownership check.
+    command: ["filebeat", "-e", "--strict.perms=false"]
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ../data/logs:/logs:ro
+      - filebeat-data:/usr/share/filebeat/data
+    healthcheck:
+      test: ["CMD-SHELL", "filebeat test output --strict.perms=false >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+    depends_on:
+      logstash:
+        condition: service_healthy
+    mem_limit: 256m
+
+  # One-shot generator run (profile "generate"); `make generate` wraps it (section 14.1).
+  generator:
+    build:
+      context: ../generator
+      dockerfile: Dockerfile
+    container_name: log-observer-generator
+    profiles: ["generate"]
+    restart: "no"
+    command:
+      - --out=/data/logs
+      - --truth=/data/ground-truth
+      - --flow-definition=/config/flows/purchase-request.yaml
+      - --start=${GEN_START:-2026-05-15T08:00}
+      - --flows=${GEN_FLOWS:-1000}
+      - --days=${GEN_DAYS:-1}
+      - --seed=${GEN_SEED:-42}
+      - --otel=${GEN_OTEL:-false}
+      - --legacy-timezone=${LOG_TIMEZONE:-UTC}
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx384m
+    volumes:
+      - ../data:/data
+      - ../config/flows:/config/flows:ro
+    mem_limit: 512m
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: log-observer-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ielop}
+      POSTGRES_USER: ${DB_USERNAME:-ielop}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ielop}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - log-observer-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-ielop} -d ${DB_NAME:-ielop}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    mem_limit: 512m
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: log-observer-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-ielop}
+      DB_USERNAME: ${DB_USERNAME:-ielop}
+      DB_PASSWORD: ${DB_PASSWORD:-ielop}
+      SERVER_PORT: 8080
+      # Empty means the dev profile falls back to its insecure local default.
+      JWT_SECRET: ${JWT_SECRET:-}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
+      JWT_ISSUER: ${JWT_ISSUER:-ielop-platform}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      ES_URL: ${ES_URL:-http://elasticsearch:9200}
+      ES_USERNAME: ${ES_USERNAME:-backend_reader}
+      ES_PASSWORD: ${ES_PASSWORD:?set ES_PASSWORD in deploy/.env}
+      ES_INDEX_PATTERN: ${ES_INDEX_PATTERN:-logs-flow-*}
+      FLOW_DEFINITIONS_DIR: /app/config/flows
+      LOG_TIMEZONE: ${LOG_TIMEZONE:-UTC}
+      AI_ENABLED: ${AI_ENABLED:-true}
+      AI_PROVIDER: ${AI_PROVIDER:-fake}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_MAX_CONTEXT_TOKENS: ${AI_MAX_CONTEXT_TOKENS:-12000}
+      AI_MAX_OUTPUT_TOKENS: ${AI_MAX_OUTPUT_TOKENS:-1500}
+      AI_TIMEOUT_SECONDS: ${AI_TIMEOUT_SECONDS:-60}
+      AI_FALLBACK1_BASE_URL: ${AI_FALLBACK1_BASE_URL:-}
+      AI_FALLBACK1_API_KEY: ${AI_FALLBACK1_API_KEY:-}
+      AI_FALLBACK1_MODEL: ${AI_FALLBACK1_MODEL:-}
+      AI_FALLBACK1_MAX_CONTEXT_TOKENS: ${AI_FALLBACK1_MAX_CONTEXT_TOKENS:-5000}
+      AI_FALLBACK2_BASE_URL: ${AI_FALLBACK2_BASE_URL:-}
+      AI_FALLBACK2_API_KEY: ${AI_FALLBACK2_API_KEY:-}
+      AI_FALLBACK2_MODEL: ${AI_FALLBACK2_MODEL:-}
+      AI_FALLBACK2_MAX_CONTEXT_TOKENS: ${AI_FALLBACK2_MAX_CONTEXT_TOKENS:-12000}
+      JAVA_TOOL_OPTIONS: -Xmx${BACKEND_HEAP:-512m}
+    volumes:
+      - ../config/flows:/app/config/flows:ro
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:8080/api/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    mem_limit: 1g
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: log-observer-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      VITE_API_PROXY_TARGET: http://backend:8080
+      # Times are shown in the log timezone (section 12.6).
+      VITE_LOG_TIMEZONE: ${LOG_TIMEZONE:-UTC}
+    ports:
+      - "5173:5173"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5173 >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    mem_limit: ${FRONTEND_MEM_LIMIT:-512m}
+
+volumes:
+  log-observer-postgres-data:
+    name: log-observer-postgres-data
+  es-data:
+  filebeat-data:

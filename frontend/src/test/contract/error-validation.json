@@ -1,0 +1,12 @@
+{
+  "code" : "VALIDATION_ERROR",
+  "message" : "size: must be between 1 and 100",
+  "timestamp" : "2026-05-16T00:00:00.000Z",
+  "requestId" : "00000000-0000-4000-8000-000000000000",
+  "status" : 400,
+  "error" : "Bad Request",
+  "path" : "/api/search/flows",
+  "fieldErrors" : {
+    "size" : "must be between 1 and 100"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "code" : "TRACE_NOT_FOUND",
+  "message" : "No logs for this reference in the selected range: REQ-20260515-999999",
+  "timestamp" : "2026-05-16T00:00:00.000Z",
+  "requestId" : "00000000-0000-4000-8000-000000000000",
+  "status" : 404,
+  "error" : "Not Found",
+  "path" : "/api/traces/REQ-20260515-999999"
+}

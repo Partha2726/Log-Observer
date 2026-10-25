@@ -1,0 +1,19 @@
+# Test-only flow definition (spec section 2.6, TRACE-019): a second, minimal flow that proves no
+# stage, role, service or event name is hard-coded. Fictional "ticket" flow at Acme Cloud.
+id: test-two-stage
+version: 1
+refPattern: '^TKT-\d{6}$'
+roles: [reporter, resolver]
+stages:
+  - name: Open
+    actorRole: reporter
+    match:
+      - { service: helpdesk-api, httpMethod: POST, urlPath: '^/tickets$' }
+      - { service: ticket-service, eventAction: [ticket.opened] }
+    successEvents: [ticket.opened]
+  - name: Resolve
+    actorRole: resolver
+    match:
+      - { service: helpdesk-api, httpMethod: POST, urlPath: '^/tickets/[^/]+/resolve$' }
+      - { service: ticket-service, eventAction: [ticket.resolved, ticket.resolve_failed] }
+    successEvents: [ticket.resolved]

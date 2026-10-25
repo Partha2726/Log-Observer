@@ -1,0 +1,10 @@
+# Grok sub-patterns for deploy/logstash/pipeline/flow.conf (spec sections 6.2 and 5.7).
+# Retune these for another company's services without touching the pipeline code (open question 8).
+
+# Host names carried in file names (formats A and D): access-<host>-<yyyy-MM-dd>.log, billing-<host>-<yyyy-MM-dd>.log
+FLOW_FILE_DAY \d{4}-\d{2}-\d{2}
+FLOW_HOST_IN_FILE /[A-Za-z0-9_]+-(?<[host][name]>[A-Za-z0-9._-]+?)-%{FLOW_FILE_DAY}\.log$
+
+# Format D (legacy billing service) message prefixes and the event.action each maps to.
+# One named group per action; the group name is the action. Add or rename alternatives here.
+FLOW_D_EVENT (?:(?<[@metadata][d_action][budget.reserved]>Reserved )|(?<[@metadata][d_action][limit.checked]>Limit check passed )|(?<[@metadata][d_action][integration.call]>Provider call |Published to billing\.events )|(?<[@metadata][d_action][integration.response]>Provider response ))

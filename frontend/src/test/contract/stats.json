@@ -1,0 +1,68 @@
+{
+  "from" : "2026-05-14T00:00:00Z",
+  "to" : "2026-05-17T00:00:00Z",
+  "flowId" : "purchase-request",
+  "timezone" : "UTC",
+  "flows" : 10,
+  "byStatus" : {
+    "COMPLETED" : 5,
+    "FAILED" : 4,
+    "REJECTED" : 1
+  },
+  "byStage" : {
+    "SignIn" : {
+      "COMPLETED" : 10
+    },
+    "Create" : {
+      "COMPLETED" : 8,
+      "FAILED" : 2
+    },
+    "Approve" : {
+      "COMPLETED" : 6,
+      "FAILED" : 1,
+      "NOT_REACHED" : 2,
+      "REJECTED" : 1
+    },
+    "Execute" : {
+      "COMPLETED" : 5,
+      "FAILED" : 1,
+      "NOT_REACHED" : 4
+    }
+  },
+  "anomaliesByRule" : [ {
+    "ruleId" : "R05",
+    "severity" : "HIGH",
+    "total" : 4,
+    "open" : 4
+  } ],
+  "byService" : [ {
+    "service" : "gateway",
+    "errors" : 3
+  }, {
+    "service" : "workflow-service",
+    "errors" : 3
+  }, {
+    "service" : "billing-service",
+    "errors" : 2
+  } ],
+  "topFailingComponents" : [ {
+    "logger" : "c.a.b.i.PaymentProviderClient",
+    "count" : 1
+  }, {
+    "logger" : "c.a.b.l.LimitCheck",
+    "count" : 1
+  }, {
+    "logger" : "com.acme.workflow.request.RequestService",
+    "count" : 1
+  }, {
+    "logger" : "gateway",
+    "count" : 1
+  } ],
+  "perDay" : [ {
+    "day" : "2026-05-15",
+    "completed" : 5,
+    "failed" : 4,
+    "rejected" : 1,
+    "incomplete" : 0
+  } ]
+}

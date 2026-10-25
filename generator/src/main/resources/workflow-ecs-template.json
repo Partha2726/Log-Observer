@@ -1,0 +1,82 @@
+{
+  "@timestamp": {
+    "$resolver": "timestamp",
+    "pattern": {
+      "format": "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+      "timeZone": "UTC"
+    }
+  },
+  "log.level": {
+    "$resolver": "level",
+    "field": "name"
+  },
+  "service.name": "workflow-service",
+  "host.name": {
+    "$resolver": "map",
+    "key": "host.name"
+  },
+  "process.thread.name": {
+    "$resolver": "thread",
+    "field": "name"
+  },
+  "log.logger": {
+    "$resolver": "logger",
+    "field": "name"
+  },
+  "http.request.id": {
+    "$resolver": "map",
+    "key": "http.request.id"
+  },
+  "user.id": {
+    "$resolver": "map",
+    "key": "user.id"
+  },
+  "session.id": {
+    "$resolver": "map",
+    "key": "session.id"
+  },
+  "flow.ref": {
+    "$resolver": "map",
+    "key": "flow.ref"
+  },
+  "event.action": {
+    "$resolver": "map",
+    "key": "event.action"
+  },
+  "message": {
+    "$resolver": "map",
+    "key": "message"
+  },
+  "amount": {
+    "$resolver": "map",
+    "key": "amount"
+  },
+  "currency": {
+    "$resolver": "map",
+    "key": "currency"
+  },
+  "vendor_account": {
+    "$resolver": "map",
+    "key": "vendor_account"
+  },
+  "cost_centre": {
+    "$resolver": "map",
+    "key": "cost_centre"
+  },
+  "reason": {
+    "$resolver": "map",
+    "key": "reason"
+  },
+  "error.type": {
+    "$resolver": "map",
+    "key": "error.type"
+  },
+  "error.message": {
+    "$resolver": "map",
+    "key": "error.message"
+  },
+  "error.stack_trace": {
+    "$resolver": "map",
+    "key": "error.stack_trace"
+  }
+}

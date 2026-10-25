@@ -1,0 +1,52 @@
+# Filebeat: one filestream input per log format (spec section 6.1). Parsing happens in Logstash,
+# so every format is tested the same way with fixtures; only format D needs a multiline parser.
+# data/logs is mounted read-only at /logs; the registry lives in the filebeat-data volume.
+
+# Shared by every input below.
+filestream_defaults: &defaults
+  fields_under_root: true
+  # Identify files by inode, not by a fingerprint of their first bytes: small generated files
+  # (a few lines spilling into the next day) are shorter than the default 1 KB fingerprint and
+  # would otherwise wait forever.
+  file_identity.native: ~
+  prospector.scanner.fingerprint.enabled: false
+  prospector.scanner.check_interval: 2s
+
+filebeat.inputs:
+  - type: filestream
+    id: fmt-a-gateway
+    <<: *defaults
+    paths: ["/logs/gateway/*.log"]
+    fields: { log_format: A, service.name: gateway }
+
+  - type: filestream
+    id: fmt-b-workflow
+    <<: *defaults
+    paths: ["/logs/workflow-service/*.json"]
+    fields: { log_format: B, service.name: workflow-service }
+
+  - type: filestream
+    id: fmt-c-auth
+    <<: *defaults
+    paths: ["/logs/auth-service/*.log"]
+    fields: { log_format: C, service.name: auth-service }
+
+  - type: filestream
+    id: fmt-d-billing
+    <<: *defaults
+    paths: ["/logs/billing-service/*.log"]
+    parsers:
+      - multiline:
+          type: pattern
+          pattern: '^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} \| '
+          negate: true
+          match: after
+          # Stack traces are at most about 40 frames; provider XML bodies are short.
+          max_lines: 500
+          timeout: 2s
+    fields: { log_format: D, service.name: billing-service }
+
+output.logstash:
+  hosts: ["${LOGSTASH_HOSTS:logstash:5044}"]
+
+logging.level: info

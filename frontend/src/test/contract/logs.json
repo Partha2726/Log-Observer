@@ -1,0 +1,25 @@
+{
+  "items" : [ {
+    "docId" : "5dd27ca4d519bea6a818fbdf7987023b9f110e6334c884d23f9f4efa08eb519b",
+    "ts" : "2026-05-15T10:39:48.750Z",
+    "service" : "billing-service",
+    "host" : "bill-01",
+    "stage" : "Approve",
+    "sourceFile" : "billing-service/billing-bill-01-2026-05-15.log",
+    "level" : "ERROR",
+    "logger" : "c.a.b.l.LimitCheck",
+    "thread" : "billing-worker-3",
+    "requestId" : "09189235-9e8c-4a68-bc39-d0d42cc2b2ec",
+    "flowRefs" : [ ],
+    "userId" : null,
+    "eventAction" : null,
+    "httpStatus" : null,
+    "snippet" : "Limit lookup failed\njava.sql.SQLTimeoutException: Query timed out after 30000 ms\n\tat com.acme.billing.limits.LimitDao.find(LimitDao.java:57)\n\tat com.acme.billing.integration.PaymentProviderClient.submit(PaymentProviderClient.java:96)\n\tat com.acme.billing.db.JdbcTemplate.query(JdbcTemplate.java:412)\n…",
+    "highlight" : "Limit lookup failed\njava.sql.<em>SQLTimeoutException</em>: Query timed out after 30000 ms\n\tat com.acme.billing.limits.LimitDao.find(LimitDao.java:57)\n\tat com.acme.billing.integration.PaymentProviderClient.submit(PaymentProviderClient.java:96)\n\tat com.acme.billing.db.JdbcTemplate.query"
+  } ],
+  "page" : 0,
+  "size" : 5,
+  "totalElements" : 1,
+  "totalPages" : 1,
+  "totalIsLowerBound" : false
+}

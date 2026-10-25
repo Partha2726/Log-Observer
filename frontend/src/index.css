@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('/fonts/IBMPlexSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('/fonts/IBMPlexSans-SemiBold.woff2') format('woff2');
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/IBMPlexMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --surface-page: #0B0E14;
+    --surface-panel: #11151D;
+    --surface-raised: #171C26;
+    --surface-hover: #1E2430;
+    --border-hairline: #252C3A;
+    --ink-primary: #E6EAF2;
+    --ink-secondary: #8B94A7;
+    --accent: #4C8DFF;
+
+    --status-ok: #39A86B;
+    --status-failed: #DC4B5A;
+    --status-warning: #D99A35;
+    --status-rejected: #9A72E6;
+
+    --severity-critical: #DC4B5A;
+    --severity-high: #D99A35;
+    --severity-medium: #E0C04E;
+    --severity-low: #8B94A7;
+
+    --background: 222 29% 6%;
+    --foreground: 220 31% 92%;
+
+    --card: 216 26% 9%;
+    --card-foreground: 220 31% 92%;
+
+    --popover: 216 26% 9%;
+    --popover-foreground: 220 31% 92%;
+
+    --primary: 217 100% 65%;
+    --primary-foreground: 222 29% 6%;
+
+    --secondary: 222 25% 12%;
+    --secondary-foreground: 220 31% 92%;
+
+    --muted: 222 25% 12%;
+    --muted-foreground: 220 14% 60%;
+
+    --accent-foreground: 222 29% 6%;
+
+    --destructive: 354 67% 58%;
+    --destructive-foreground: 220 31% 92%;
+
+    --border: 221 23% 19%;
+    --input: 221 23% 19%;
+    --ring: 217 100% 65%;
+
+    --radius: 0.5rem;
+  }
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--surface-page);
+  color: var(--ink-primary);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono,
+input,
+select,
+textarea {
+  font-variant-numeric: tabular-nums;
+}
+
+.font-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+.view-fade {
+  animation: view-fade-in 250ms ease-out both;
+}
+
+@keyframes view-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-fade {
+    animation: none;
+  }
+}
+
+/* Glassmorphism and modern surface utilities */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}

@@ -1,0 +1,81 @@
+{
+  "flowRef" : "REQ-20260515-000020",
+  "flowId" : "purchase-request",
+  "flowVersion" : 1,
+  "overallStatus" : "FAILED",
+  "actors" : {
+    "requester" : "usr-6490",
+    "approver" : "usr-9970"
+  },
+  "requester" : "usr-6490",
+  "approver" : "usr-9970",
+  "executor" : null,
+  "amount" : 28031.9,
+  "currency" : "USD",
+  "counterpartyLast4" : "6109",
+  "firstSeen" : "2026-05-15T08:13:13.643Z",
+  "lastSeen" : "2026-05-15T10:40:39.599Z",
+  "durationMs" : 8845956,
+  "stages" : [ {
+    "stage" : "SignIn",
+    "order" : 1,
+    "status" : "COMPLETED",
+    "userId" : "usr-6490",
+    "startedAt" : "2026-05-15T08:13:13.643Z",
+    "endedAt" : "2026-05-15T10:38:43.654Z",
+    "durationMs" : 8730011,
+    "errorCount" : 0
+  }, {
+    "stage" : "Create",
+    "order" : 2,
+    "status" : "COMPLETED",
+    "userId" : "usr-6490",
+    "startedAt" : "2026-05-15T08:13:33.000Z",
+    "endedAt" : "2026-05-15T08:13:42.680Z",
+    "durationMs" : 9680,
+    "errorCount" : 0
+  }, {
+    "stage" : "Approve",
+    "order" : 3,
+    "status" : "FAILED",
+    "userId" : "usr-9970",
+    "startedAt" : "2026-05-15T10:39:18.675Z",
+    "endedAt" : "2026-05-15T10:39:48.828Z",
+    "durationMs" : 30153,
+    "errorCount" : 3
+  }, {
+    "stage" : "Execute",
+    "order" : 4,
+    "status" : "NOT_REACHED",
+    "userId" : null,
+    "startedAt" : null,
+    "endedAt" : null,
+    "durationMs" : null,
+    "errorCount" : 0
+  } ],
+  "firstFailure" : {
+    "stage" : "Approve",
+    "component" : "c.a.b.l.LimitCheck",
+    "exception" : "java.sql.SQLTimeoutException",
+    "httpStatus" : null,
+    "docId" : "5dd27ca4d519bea6a818fbdf7987023b9f110e6334c884d23f9f4efa08eb519b"
+  },
+  "anomalies" : [ {
+    "id" : 1,
+    "ruleId" : "R05",
+    "ruleName" : "Stage failed",
+    "severity" : "HIGH",
+    "status" : "NEW",
+    "details" : {
+      "stage" : "Approve"
+    },
+    "evidenceDocIds" : [ "5dd27ca4d519bea6a818fbdf7987023b9f110e6334c884d23f9f4efa08eb519b" ],
+    "version" : 0
+  } ],
+  "observedRatio" : 0.91,
+  "excludedCount" : 0,
+  "truncated" : false,
+  "linkCount" : 34,
+  "assembledAt" : "2026-05-16T00:00:00.000Z",
+  "assemblyVersion" : 2
+}

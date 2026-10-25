@@ -1,0 +1,28 @@
+[ {
+  "id" : "purchase-request",
+  "version" : 1,
+  "refPattern" : "^REQ-\\d{8}-\\d{6}$",
+  "roles" : [ "requester", "approver", "executor" ],
+  "stages" : [ {
+    "name" : "SignIn",
+    "order" : 1,
+    "actorRole" : null,
+    "canReject" : false
+  }, {
+    "name" : "Create",
+    "order" : 2,
+    "actorRole" : "requester",
+    "canReject" : false
+  }, {
+    "name" : "Approve",
+    "order" : 3,
+    "actorRole" : "approver",
+    "canReject" : true
+  }, {
+    "name" : "Execute",
+    "order" : 4,
+    "actorRole" : "executor",
+    "canReject" : false
+  } ],
+  "hasBusinessFields" : true
+} ]

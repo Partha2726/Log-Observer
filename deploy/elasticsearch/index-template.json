@@ -1,0 +1,290 @@
+{
+  "index_patterns": [
+    "logs-flow-*"
+  ],
+  "priority": 200,
+  "_meta": {
+    "description": "Log Observer parsed log events, ECS names where they exist (spec sections 6.3 and 6.4). Priority 200 beats the built-in logs-*-* data stream template, so these are plain indices. Text fields use the log_text analyzer, which splits on punctuation so class names, dotted paths and IDs are searchable by their parts."
+  },
+  "template": {
+    "settings": {
+      "index": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0,
+        "lifecycle": {
+          "name": "logs-flow-30d"
+        },
+        "analysis": {
+          "tokenizer": {
+            "log_words": {
+              "type": "pattern",
+              "pattern": "[^\\p{L}\\p{N}_]+"
+            }
+          },
+          "analyzer": {
+            "log_text": {
+              "type": "custom",
+              "tokenizer": "log_words",
+              "filter": [
+                "lowercase"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "mappings": {
+      "dynamic": false,
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "ingested_at": {
+          "type": "date"
+        },
+        "log_format": {
+          "type": "keyword"
+        },
+        "service": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            }
+          }
+        },
+        "host": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            }
+          }
+        },
+        "log": {
+          "properties": {
+            "level": {
+              "type": "keyword"
+            },
+            "logger": {
+              "type": "keyword"
+            },
+            "offset": {
+              "type": "long"
+            },
+            "file": {
+              "properties": {
+                "path": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
+        },
+        "process": {
+          "properties": {
+            "pid": {
+              "type": "long"
+            },
+            "thread": {
+              "properties": {
+                "name": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
+        },
+        "method": {
+          "type": "keyword"
+        },
+        "line": {
+          "type": "integer"
+        },
+        "user": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            }
+          }
+        },
+        "session": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            }
+          }
+        },
+        "client": {
+          "properties": {
+            "ip": {
+              "type": "ip"
+            }
+          }
+        },
+        "event": {
+          "properties": {
+            "action": {
+              "type": "keyword"
+            },
+            "duration_s": {
+              "type": "float"
+            }
+          }
+        },
+        "http": {
+          "properties": {
+            "version": {
+              "type": "keyword"
+            },
+            "request": {
+              "properties": {
+                "id": {
+                  "type": "keyword"
+                },
+                "method": {
+                  "type": "keyword"
+                },
+                "referrer": {
+                  "type": "keyword",
+                  "ignore_above": 1024
+                }
+              }
+            },
+            "response": {
+              "properties": {
+                "status_code": {
+                  "type": "integer"
+                },
+                "bytes": {
+                  "type": "long"
+                }
+              }
+            }
+          }
+        },
+        "url": {
+          "properties": {
+            "original": {
+              "type": "keyword",
+              "ignore_above": 2048
+            },
+            "path": {
+              "type": "keyword",
+              "ignore_above": 2048
+            }
+          }
+        },
+        "user_agent": {
+          "properties": {
+            "original": {
+              "type": "keyword",
+              "ignore_above": 512
+            }
+          }
+        },
+        "error": {
+          "properties": {
+            "type": {
+              "type": "keyword"
+            },
+            "message": {
+              "type": "text",
+              "analyzer": "log_text"
+            },
+            "stack_trace": {
+              "type": "text",
+              "index": false
+            }
+          }
+        },
+        "flow": {
+          "properties": {
+            "refs": {
+              "type": "keyword"
+            },
+            "external_correlation_id": {
+              "type": "keyword"
+            },
+            "provider_status": {
+              "type": "keyword"
+            },
+            "amount": {
+              "type": "scaled_float",
+              "scaling_factor": 100
+            },
+            "limit_amount": {
+              "type": "scaled_float",
+              "scaling_factor": 100
+            },
+            "currency": {
+              "type": "keyword"
+            },
+            "counterparty_hash": {
+              "type": "keyword"
+            },
+            "counterparty_last4": {
+              "type": "keyword"
+            },
+            "cost_centre": {
+              "type": "keyword"
+            },
+            "reason": {
+              "type": "keyword"
+            },
+            "permission": {
+              "type": "keyword"
+            },
+            "resource": {
+              "type": "keyword"
+            },
+            "mfa": {
+              "type": "keyword"
+            },
+            "idle_minutes": {
+              "type": "integer"
+            }
+          }
+        },
+        "trace": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            }
+          }
+        },
+        "span": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            }
+          }
+        },
+        "is_error": {
+          "type": "boolean"
+        },
+        "is_warning": {
+          "type": "boolean"
+        },
+        "has_stacktrace": {
+          "type": "boolean"
+        },
+        "message_body": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 1024
+            }
+          },
+          "analyzer": "log_text"
+        },
+        "message": {
+          "type": "text",
+          "analyzer": "log_text"
+        },
+        "tags": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "items" : [ {
+    "flowRef" : "REQ-20260515-000020",
+    "flowId" : "purchase-request",
+    "overallStatus" : "FAILED",
+    "actors" : {
+      "requester" : "usr-6490",
+      "approver" : "usr-9970"
+    },
+    "requester" : "usr-6490",
+    "approver" : "usr-9970",
+    "executor" : null,
+    "firstSeen" : "2026-05-15T08:13:13.643Z",
+    "lastSeen" : "2026-05-15T10:40:39.599Z",
+    "amount" : 28031.9,
+    "currency" : "USD",
+    "anomalyCount" : 1,
+    "maxSeverity" : "HIGH",
+    "assembled" : true
+  } ],
+  "page" : 0,
+  "size" : 25,
+  "totalElements" : 1,
+  "totalPages" : 1,
+  "totalIsLowerBound" : false
+}

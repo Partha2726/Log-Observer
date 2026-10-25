@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Generator logging: one logger and one file appender per Acme Cloud service (spec section 5.2).
+  Each appender routes by the context key "file" (the path relative to the output root, which
+  the generator computes, e.g. billing-service/billing-bill-01-2026-05-15.log), so daily files and
+  host-named files are created on demand. Timestamps come from the simulated clock (SimClock).
+-->
+<Configuration status="warn" shutdownHook="disable">
+  <Appenders>
+    <!-- Format A, gateway: the generator formats the nginx combined line itself. -->
+    <Routing name="gateway">
+      <Routes pattern="$${ctx:file}">
+        <Route>
+          <File name="gateway-${ctx:file}" fileName="${sys:gen.out}/${ctx:file}" append="false"
+                bufferedIO="true" immediateFlush="false" bufferSize="65536">
+            <PatternLayout pattern="%m%n" charset="UTF-8"/>
+          </File>
+        </Route>
+      </Routes>
+    </Routing>
+
+    <!-- Format B, workflow-service: JSON lines with ECS-style keys. -->
+    <Routing name="workflow">
+      <Routes pattern="$${ctx:file}">
+        <Route>
+          <File name="workflow-${ctx:file}" fileName="${sys:gen.out}/${ctx:file}" append="false"
+                bufferedIO="true" immediateFlush="false" bufferSize="65536">
+            <JsonTemplateLayout eventTemplateUri="classpath:${sys:gen.workflowTemplate:-workflow-ecs-template.json}" charset="UTF-8"/>
+          </File>
+        </Route>
+      </Routes>
+    </Routing>
+
+    <!-- Format C, auth-service: syslog RFC 5424 with structured data acme@32473. -->
+    <Routing name="auth">
+      <Routes pattern="$${ctx:file}">
+        <Route>
+          <File name="auth-${ctx:file}" fileName="${sys:gen.out}/${ctx:file}" append="false"
+                bufferedIO="true" immediateFlush="false" bufferSize="65536">
+            <HostAwareRfc5424Layout facility="AUTHPRIV" appName="acme-auth" enterpriseNumber="32473" id="acme"/>
+          </File>
+        </Route>
+      </Routes>
+    </Routing>
+
+    <!-- Format D, billing-service: log4j2 PatternLayout exactly as in spec section 3, no zone in the line.
+         In OpenTelemetry mode (phase 3) the request-ID column gains " trace_id=%X{trace_id}" (gen.otelD). -->
+    <Routing name="billing">
+      <Routes pattern="$${ctx:file}">
+        <Route>
+          <File name="billing-${ctx:file}" fileName="${sys:gen.out}/${ctx:file}" append="false"
+                bufferedIO="true" immediateFlush="false" bufferSize="65536">
+            <PatternLayout charset="UTF-8"
+                pattern="%d{yyyy-MM-dd HH:mm:ss,SSS}{${sys:gen.legacyTz}} | %-5p | [%t] | %X{requestId}${sys:gen.otelD:-} | %c{1.}:%M(%L) | %m%n"/>
+          </File>
+        </Route>
+      </Routes>
+    </Routing>
+  </Appenders>
+
+  <Loggers>
+    <Logger name="acme.gateway" level="all" additivity="false" includeLocation="false">
+      <AppenderRef ref="gateway"/>
+    </Logger>
+    <Logger name="com.acme.workflow" level="all" additivity="false" includeLocation="false">
+      <AppenderRef ref="workflow"/>
+    </Logger>
+    <Logger name="com.acme.auth" level="all" additivity="false" includeLocation="false">
+      <AppenderRef ref="auth"/>
+    </Logger>
+    <!-- Location (%M, %L) comes from LogBuilder.withLocation, set by the emitter. -->
+    <Logger name="com.acme.billing" level="all" additivity="false" includeLocation="true">
+      <AppenderRef ref="billing"/>
+    </Logger>
+    <Root level="off"/>
+  </Loggers>
+</Configuration>

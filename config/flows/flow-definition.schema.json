@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app.acme.example/schemas/flow-definition.schema.json",
+  "title": "Log Observer flow definition (spec section 2.6)",
+  "description": "Stages, roles, matchers and success markers of one traced flow. The only place stage names, roles and event names live.",
+  "type": "object",
+  "required": ["id", "version", "refPattern", "roles", "stages"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "refPattern": { "type": "string", "minLength": 1, "description": "Java regular expression recognising this flow's flowRef" },
+    "roles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,31}$" }
+    },
+    "stages": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/stage" } },
+    "signOut": {
+      "type": "object",
+      "required": ["match"],
+      "additionalProperties": false,
+      "properties": { "match": { "$ref": "#/$defs/matchList" } }
+    },
+    "businessFields": {
+      "type": "object",
+      "propertyNames": { "enum": ["amount", "currency", "counterparty"] },
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "stage": {
+      "type": "object",
+      "required": ["name", "match", "successEvents"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]{0,39}$", "not": { "const": "signOut" } },
+        "actorRole": { "type": ["string", "null"] },
+        "canReject": { "type": "boolean" },
+        "match": { "$ref": "#/$defs/matchList" },
+        "successEvents": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "rejectEvents": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "matchList": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/matcher" } },
+    "matcher": {
+      "type": "object",
+      "required": ["service"],
+      "additionalProperties": false,
+      "properties": {
+        "service": { "type": "string", "minLength": 1 },
+        "httpMethod": { "type": "string", "pattern": "^[A-Z]+$" },
+        "urlPath": { "type": "string", "minLength": 1 },
+        "eventAction": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      },
+      "anyOf": [ { "required": ["urlPath"] }, { "required": ["eventAction"] } ]
+    }
+  }
+}

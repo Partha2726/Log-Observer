@@ -1,0 +1,31 @@
+spring:
+  jpa:
+    show-sql: true
+  flyway:
+    # Adds the dev-only seed migrations (test/demo users) on top of the
+    # base schema migrations. These live in a separate directory so they
+    # are never picked up by default/prod profiles. See
+    # db/migration/dev/README.md for details.
+    locations: classpath:db/migration,classpath:db/dev-migration
+
+logging:
+  level:
+    root: INFO
+    com.ielop.platform: DEBUG
+
+# Dev-only, clearly insecure default so `mvn spring-boot:run` works out of
+# the box without extra setup. Never reuse this value outside local
+# development, and always override JWT_SECRET explicitly in any shared or
+# deployed environment.
+security:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-insecure-jwt-signing-secret-do-not-use-in-production-01234567}
+
+# OpenAPI document at /api/docs and its UI at /api/docs/ui (dev profile only, section 8.7).
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api/docs
+  swagger-ui:
+    enabled: true
+    path: /api/docs/ui

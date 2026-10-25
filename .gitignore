@@ -1,0 +1,30 @@
+# Build output
+backend/target/
+generator/target/
+frontend/node_modules/
+frontend/dist/
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+deploy/.env
+.denylist
+
+# Generated data (spec section 4.2)
+data/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Evaluation scratch output
+evaluation/*.local.*
+
+# Playwright output
+frontend/test-results/
+frontend/playwright-report/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
